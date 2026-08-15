@@ -6,6 +6,12 @@ Display da scrivania basato su **ESP32** con orologio animato, meteo in tempo re
 ![Display](https://img.shields.io/badge/display-SSD1306%20128x64-lightgrey)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
+<img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/0c3f2607-80f9-4fc5-a98f-b27b8b6dad18" />
+
+Custodia su makerworld
+https://makerworld.com/it/models/3161806-desk-display-esp32-c3-supermini#profileId-3573466
+
+
 ---
 
 ## Cosa fa
