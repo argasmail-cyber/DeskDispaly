@@ -115,6 +115,10 @@ void DisplayRenderer::renderClock(const SystemState& sys) {
   if (style == CLOCK_STYLE_LARGE) renderClockLarge(sys, hour, min);
   else if (style == CLOCK_STYLE_MARIO) renderClockMario(sys, hour, min, dt);
   else if (style == CLOCK_STYLE_INVADERS) renderClockInvaders(sys, hour, min, dt);
+  else if (style == CLOCK_STYLE_WAVE) renderClockWave(sys, hour, min, dt);
+  else if (style == CLOCK_STYLE_ORBIT) renderClockOrbit(sys, hour, min, dt);
+  else if (style == CLOCK_STYLE_BINARY) renderClockBinary(sys, hour, min);
+  else if (style == CLOCK_STYLE_STARFIELD) renderClockStarfield(sys, hour, min, dt);
   else renderClockStandard(sys, hour, min, dt);
 
   drawWifiDot(sys.wifiConnected);
@@ -140,23 +144,6 @@ void DisplayRenderer::renderClockStandard(const SystemState& sys, int hour, int 
     drawCenteredText("--:--", 20);
   }
 
-  // v8.4: riga meteo compatta con entrambe le città (niente icone, non c'è
-  // spazio per stare comode affiancate leggibili su 128px di larghezza)
-  if (sys.hasWeatherGodo || sys.hasWeatherMilano) {
-    display.setTextSize(1);
-    String line;
-    if (sys.hasWeatherGodo) {
-      line += "Godo " + String((int)sys.weatherGodo.temperature) + (char)247;
-    }
-    if (sys.hasWeatherMilano) {
-      if (line.length()) line += "  ";
-      line += "Mi " + String((int)sys.weatherMilano.temperature) + (char)247;
-    }
-    drawCenteredText(line, 48);
-  } else {
-    display.setTextSize(1);
-    drawCenteredText("Meteo in attesa", 48);
-  }
 }
 
 void DisplayRenderer::renderClockLarge(const SystemState& sys, int hour, int min) {
@@ -227,6 +214,137 @@ void DisplayRenderer::renderClockInvaders(const SystemState& sys, int hour, int 
   if (bounced) anim.alienDirectionRight = !anim.alienDirectionRight;
 }
 
+void DisplayRenderer::renderClockWave(const SystemState& sys, int hour, int min, float dt) {
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  if (sys.validTime) {
+    display.print(sys.dayOfWeek);
+    display.print(" ");
+    display.print(sys.dateStr);
+  } else {
+    display.print("Sincronizzo ora...");
+  }
+
+  if (sys.validTime) drawBigTime(hour, min, 3, SCREEN_WIDTH / 2, 14, sys);
+  else {
+    display.setTextSize(2);
+    drawCenteredText("--:--", 20);
+  }
+
+  // Onda animata che scorre in continuazione sotto l'ora
+  anim.wavePhase += 0.06f * dt;
+  const int waveY = 50;
+  const int amplitude = 6;
+  int prevX = 0;
+  int prevY = waveY + (int)(sin(anim.wavePhase) * amplitude);
+  for (int x = 2; x <= SCREEN_WIDTH; x += 3) {
+    float angle = anim.wavePhase + x * 0.09f;
+    int y = waveY + (int)(sin(angle) * amplitude);
+    display.drawLine(prevX, prevY, x, y, SSD1306_WHITE);
+    prevX = x;
+    prevY = y;
+  }
+}
+
+void DisplayRenderer::renderClockOrbit(const SystemState& sys, int hour, int min, float dt) {
+  (void)dt;
+  display.setTextColor(SSD1306_WHITE);
+
+  if (sys.validTime) drawBigTime(hour, min, 3, SCREEN_WIDTH / 2, 14, sys);
+  else {
+    display.setTextSize(2);
+    drawCenteredText("--:--", 18);
+  }
+
+  // Un giro completo al minuto: il puntino segna visivamente i secondi
+  // senza bisogno di numeri.
+  const int cx = SCREEN_WIDTH / 2;
+  const int cy = 49;
+  const int radiusX = 12;
+  const int radiusY = 7;
+  float secFraction = (millis() % 60000UL) / 60000.0f;
+  float angle = secFraction * 2.0f * PI - (PI / 2.0f);  // parte dalle "ore 12"
+  int px = cx + (int)(cos(angle) * radiusX);
+  int py = cy + (int)(sin(angle) * radiusY);
+
+  display.drawCircle(cx, cy, 1, SSD1306_WHITE);  // centro
+  display.fillCircle(px, py, 2, SSD1306_WHITE);   // pianeta in orbita
+}
+
+void DisplayRenderer::renderClockBinary(const SystemState& sys, int hour, int min) {
+  display.setTextColor(SSD1306_WHITE);
+  display.setTextSize(1);
+  display.setCursor(0, 0);
+  if (sys.validTime) {
+    display.print(sys.dayOfWeek);
+    display.print(" ");
+    display.print(sys.dateStr);
+  } else {
+    display.print("Sincronizzo ora...");
+  }
+
+  if (sys.validTime) drawBigTime(hour, min, 2, SCREEN_WIDTH / 2, 10, sys);
+  else {
+    display.setTextSize(2);
+    drawCenteredText("--:--", 12);
+  }
+
+  if (!sys.validTime) return;
+
+  // Rappresentazione BCD: 4 colonne (H decine, H unità, M decine, M unità),
+  // ogni colonna mostra i suoi bit dall'alto (MSB) verso il basso.
+  uint8_t values[4] = {
+    (uint8_t)(hour / 10),
+    (uint8_t)(hour % 10),
+    (uint8_t)(min / 10),
+    (uint8_t)(min % 10)
+  };
+  const uint8_t bitsFor[4] = {2, 4, 3, 4};
+  const int colX[4] = {22, 50, 78, 106};
+  const int dotY0 = 37;
+  const int dotSpacing = 7;
+
+  for (uint8_t col = 0; col < 4; col++) {
+    uint8_t bits = bitsFor[col];
+    for (uint8_t row = 0; row < bits; row++) {
+      bool on = (values[col] >> (bits - 1 - row)) & 0x01;
+      int y = dotY0 + row * dotSpacing;
+      if (on) display.fillCircle(colX[col], y, 2, SSD1306_WHITE);
+      else display.drawCircle(colX[col], y, 2, SSD1306_WHITE);
+    }
+  }
+}
+
+void DisplayRenderer::renderClockStarfield(const SystemState& sys, int hour, int min, float dt) {
+  display.setTextColor(SSD1306_WHITE);
+
+  if (!anim.starsInit) {
+    for (uint8_t i = 0; i < AnimationState::STAR_COUNT; i++) {
+      anim.starX[i] = random(0, SCREEN_WIDTH);
+      anim.starY[i] = random(0, SCREEN_HEIGHT);
+      anim.starSpeed[i] = 0.3f + (random(0, 100) / 100.0f) * 1.2f;
+    }
+    anim.starsInit = true;
+  }
+
+  for (uint8_t i = 0; i < AnimationState::STAR_COUNT; i++) {
+    anim.starX[i] -= anim.starSpeed[i] * dt;
+    if (anim.starX[i] < 0) {
+      anim.starX[i] = SCREEN_WIDTH;
+      anim.starY[i] = random(0, SCREEN_HEIGHT);
+      anim.starSpeed[i] = 0.3f + (random(0, 100) / 100.0f) * 1.2f;
+    }
+    display.drawPixel((int)anim.starX[i], anim.starY[i], SSD1306_WHITE);
+  }
+
+  if (sys.validTime) drawBigTime(hour, min, 3, SCREEN_WIDTH / 2, 22, sys);
+  else {
+    display.setTextSize(2);
+    drawCenteredText("--:--", 24);
+  }
+}
+
 void DisplayRenderer::renderWeatherBody(const WeatherData& w, bool hasWeather, const SystemState& sys) {
   display.setTextColor(SSD1306_WHITE);
   display.setTextSize(1);
@@ -291,7 +409,7 @@ void DisplayRenderer::renderWeatherBody(const WeatherData& w, bool hasWeather, c
 void DisplayRenderer::renderStatusBody(const SystemState& sys) {
   display.setTextSize(1);
   display.setTextColor(SSD1306_WHITE);
-  display.setCursor(0, 0); display.print("STATUS:");
+  display.setCursor(0, 0);  display.print("STATUS:");
   display.setCursor(0, 10); display.print("WiFi: "); display.print(sys.wifiConnected ? "OK" : "NO");
   display.setCursor(0, 20); display.print("IP: "); display.print(sys.ipAddress);
   display.setCursor(0, 30); display.print("Heap: "); display.print(ESP.getFreeHeap() / 1024); display.print(" KB");

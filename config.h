@@ -1,4 +1,4 @@
-// config.h - Desk Display v8.4
+// config.h - Desk Display v8.7
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -11,6 +11,7 @@ enum ScreenMode : uint8_t {
   SCREEN_WEATHER_GODO,
   SCREEN_WEATHER_MILANO,
   SCREEN_STATUS,
+  SCREEN_GAME,       // v8.5: mini-gioco "salta l'ostacolo"
   SCREEN_COUNT
 };
 
@@ -20,6 +21,10 @@ enum ClockAnimStyle : uint8_t {
   CLOCK_STYLE_LARGE,
   CLOCK_STYLE_MARIO,
   CLOCK_STYLE_INVADERS,
+  CLOCK_STYLE_WAVE,       // v8.7: onda animata dietro l'ora
+  CLOCK_STYLE_ORBIT,      // v8.7: puntino che orbita, un giro al minuto
+  CLOCK_STYLE_BINARY,     // v8.7: ora anche in binario (BCD, 4 colonne)
+  CLOCK_STYLE_STARFIELD,  // v8.7: campo stellare sullo sfondo
   CLOCK_STYLE_CYCLE_ALL,
   CLOCK_STYLE_COUNT
 };
@@ -125,6 +130,7 @@ constexpr unsigned long SCREEN_DWELL_MS = 0;            // nessun auto-return
 constexpr unsigned long CLOCK_STYLE_CYCLE_MS = 300000;  // 5 minuti
 constexpr unsigned long COLON_BLINK_MS = 500;
 constexpr uint8_t BUZZER_PWM_RESOLUTION = 8;
+constexpr unsigned long GAME_FRAME_MS = 40;  // ~25fps mentre si gioca (schermate normali restano a 250ms)
 
 #define NTP_SERVER "pool.ntp.org"
 constexpr long NTP_OFFSET_CET = 3600;

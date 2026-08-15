@@ -28,6 +28,14 @@ private:
     float marioVelX = 0.45f;
     float alienX[3] = {20, 58, 96};
     bool alienDirectionRight = true;
+
+    // v8.7: stato per WAVE e STARFIELD
+    float wavePhase = 0;
+    static const uint8_t STAR_COUNT = 14;
+    float starX[STAR_COUNT];
+    uint8_t starY[STAR_COUNT];
+    float starSpeed[STAR_COUNT];
+    bool starsInit = false;
   } anim;
 
   float animDt();
@@ -43,6 +51,10 @@ private:
   void renderClockLarge(const SystemState& sys, int hour, int min);
   void renderClockMario(const SystemState& sys, int hour, int min, float dt);
   void renderClockInvaders(const SystemState& sys, int hour, int min, float dt);
+  void renderClockWave(const SystemState& sys, int hour, int min, float dt);
+  void renderClockOrbit(const SystemState& sys, int hour, int min, float dt);
+  void renderClockBinary(const SystemState& sys, int hour, int min);
+  void renderClockStarfield(const SystemState& sys, int hour, int min, float dt);
   void renderWeatherBody(const WeatherData& w, bool hasWeather, const SystemState& sys);
   void renderStatusBody(const SystemState& sys);
   const unsigned char* getWeatherIconPtr(uint8_t iconId);
