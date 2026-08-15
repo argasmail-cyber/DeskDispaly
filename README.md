@@ -9,13 +9,16 @@ Display da scrivania basato su **ESP32** con orologio animato, meteo in tempo re
 <img width="591" height="1280" alt="image" src="https://github.com/user-attachments/assets/0c3f2607-80f9-4fc5-a98f-b27b8b6dad18" />
 
 Custodia su makerworld
+
 https://makerworld.com/it/models/3161806-desk-display-esp32-c3-supermini#profileId-3573466
 
 Assieme Custodia
+
 <img width="1210" height="873" alt="Schermata del 2026-08-15 03-06-07" src="https://github.com/user-attachments/assets/a2a88634-f221-4eda-ac91-339b3704af96" />
 
 
 Schema elettrico
+
 <img width="864" height="611" alt="Schermata del 2026-08-15 02-59-27" src="https://github.com/user-attachments/assets/c75662a8-4a01-46a8-8442-28eae4e2d4ab" />
 
 
